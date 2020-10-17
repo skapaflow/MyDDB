@@ -3,7 +3,7 @@
 
 int main (void) {
 	/*
-		gcc -o myddb_ex.exe myddb_ex.c myddb.c -s -Wall | myddb_ex.exe
+		gcc -o myddb_ex.exe myddb_ex.c myddb.c -s -Wall
 	*/
 	printf("\n MyDDB C\n");
 
