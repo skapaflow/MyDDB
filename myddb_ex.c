@@ -8,7 +8,7 @@ int main (void) {
 	printf("\n MyDDB C\n");
 
 	myddb_init();
-	myddb("PATH ../data FROM helloworld PRINT 1");
+	myddb("PATH data FROM helloworld PRINT 1");
 	myddb_close();
 
 	return 0;
