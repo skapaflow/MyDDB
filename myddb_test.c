@@ -7,6 +7,7 @@ int main (void) {
 	int c = 0;
 
 	myddb_init();
+	myddb("PATH data");
 
 	const char myddb_test[] =
 		"\n  0 - set directory          1 - create and exclude\n"
@@ -29,7 +30,7 @@ int main (void) {
 		switch (c) {
 			case 0:
 				/* set directory */
-				myddb("PATH .");
+				myddb("PATH data");
 				printf("\n [SET DIRECTORY] \"%s\"\n", myddb_path);
 				break;
 			case 1:
@@ -71,13 +72,13 @@ int main (void) {
 				/* print format 0 */
 				printf("\n [PRINT FORMAT 0]\n");
 				myddb("FROM wonderland PRINT 0");
+				myddb("FROM helloworld PRINT 0");
 				break;
 			case 8:
 				/* print format 1 */
 				printf("\n [PRINT FORMAT 0]\n");
+				myddb("FROM helloworld PRINT 1");
 				myddb("FROM wonderland PRINT 1");
-				myddb("FROM Porn PRINT 1");
-				myddb("FROM test_data PRINT 1");
 				break;
 			case 9:
 				/* test cross */
@@ -122,13 +123,13 @@ int main (void) {
 				/* test size */
 				printf("\n [TEST SIZE]\n");
 				myddb("CREATE test_data SHOW");
-				myddb("FROM test_data COL (TTT0 TTT1 TTT2 TTT3 TTT4 TTT5 TTT6 TTT7 TTT8 TTT9) PRINT 1");
+				myddb("FROM test_data COL (TEST0 TEST1 TEST2 TEST3 TEST4 TEST5 TEST6 TEST7 TEST8 TEST9) PRINT 1");
 				for (int i = 0, j = 0; i <= 9000; i++) {
 					if (j++ > 100) {
 						j = 0;
 						printf("\r add_iter[%d]", i);
 					}
-					myddb("FROM test_data ADD (TTT0=%d TTT1=%d TTT2=%d TTT3=%d TTT4=%d TTT5=%d TTT6=%d TTT7=%d TTT8=%d TTT9=%d)" , i, i, i, i, i, i, i, i, i, i);
+					myddb("FROM test_data ADD (TEST0=%d TEST1=%d TEST2=%d TEST3=%d TEST4=%d TEST5=%d TEST6=%d TEST7=%d TEST8=%d TEST9=%d)" , i, i, i, i, i, i, i, i, i, i);
 				}
 				myddb("FROM test_data PRINT 1 SHOW EXCLUDE test_data");
 				break;
