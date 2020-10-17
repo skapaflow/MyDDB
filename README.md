@@ -5,9 +5,9 @@
 <h1 align="center">My Domestic Database</h1>
 
 <b>MyDDB</b> is a simple database management system write in C,
-created to be simple and small, it's very useful in projects with non-sensitive data,
+created to be small, it's very useful in projects with non-sensitive data,
 because the data is stored in a flat-file with only rows and columns.
-using a relational database model, and simple commands CRUD-based (Create Read Update Delete).
+using a relational database model, and basic commands CRUD-based (Create Read Update Delete).
 
 MyDDB code is portable for Linux and Windows.
 
