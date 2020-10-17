@@ -163,6 +163,8 @@ typedef struct {
 	char *oinsert;  /* input buffer insertion */
 } MYDDBTABLE;
 
+extern MYDDBTABLE *omyddb;
+
 int strlen_utf8 (const char *);
 int64_t size_file (FILE *);
 const char *strbytes (int64_t);
