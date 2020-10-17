@@ -1,9 +1,9 @@
 #include <stdio.h>
-#include "myddb.h"
+#include "src/myddb.h"
 
 int main (void) {
 	/*
-		gcc -o myddb_ex.exe myddb_ex.c myddb.c -s -Wall
+		gcc -o myddb_ex.exe myddb_ex.c src/myddb.c -s -Wall
 	*/
 	printf("\n MyDDB C\n");
 
