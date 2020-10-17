@@ -1,7 +1,9 @@
 #include "src/myddb.h"
 
 int main (void) {
-
+	/*
+		gcc -o myddb_test.exe myddb_test.c src/myddb.c -s -Wall
+	*/
 	int c = 0;
 
 	myddb_init();
