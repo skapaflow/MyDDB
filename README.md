@@ -16,9 +16,9 @@ MyDDB code is portable for Linux and Windows.
 ## Building
 
 MyDDB is self-contained in two files:
-[myddb.h](https://www.google.com/skapaflow/MyDDB)
+[myddb.h](https://github.com/skapaflow/MyDDB/blob/master/src/myddb.h)
 and
-[myddb.c](https://www.google.com/skapaflow/MyDDB)
+[myddb.c](https://github.com/skapaflow/MyDDB/blob/master/src/myddb.c)
 To use MyDDB, simply add those two files to your project.
 
 ## Example Code
