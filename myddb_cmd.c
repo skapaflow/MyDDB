@@ -1,7 +1,9 @@
 #include "src/myddb.h"
 
 int main (int argc, char const *argv[]) {
-
+	/*
+		gcc -o myddb_cmd.exe myddb_cmd.c src/myddb.c -s -Wall
+	*/
 	char *str = malloc(sizeof(char) * DDBMAX);
 
 	myddb_init();
