@@ -22,7 +22,9 @@ and
 To use MyDDB, simply add those two files to your project.
 
 ## Example Code
-* [myddb_ex1.c](https://www.google.com/skapaflow/MyDDB)
+* [myddb_ex.c](https://github.com/skapaflow/MyDDB/blob/master/myddb_ex.c)
+* [myddb_cmd.c](https://github.com/skapaflow/MyDDB/blob/master/myddb_cmd.c)
+* [myddb_cpp.cpp](https://github.com/skapaflow/MyDDB/blob/master/myddb_cpp.cpp)
 
 ## Sintax
 It's a very simple sintax, has just two elements: (a "command" followed by an "argument") some commands has no argument.
