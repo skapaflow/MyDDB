@@ -595,10 +595,9 @@ myddb_exit:
 
 void myddb_init (void) {
 
-	/* initiate UTF-8 for windows CMD */
+	/* get console state */
 #ifdef WIN_OS
 	output_state_shell = GetConsoleOutputCP();
-	SetConsoleOutputCP(CP_UTF8); /* UTF-8 output */
 #endif
 
 	myddb_calloc(char, myddb_path, DDBMAX);
@@ -618,10 +617,6 @@ void myddb_close (void) {
 	myddb_fclose(myddb_file);
 
 	free_get_args();
-
-	#ifdef WIN_OS/* return console windows state */
-		SetConsoleOutputCP(output_state_shell);
-	#endif
 }
 
 int myddb_open (const char *file) {
@@ -669,7 +664,11 @@ void myddb_show (void) {
 
 	/* getcwd - get the pathname of the current working directory */
 	getcwd(path, DDBMIN);
-	printf("\n DIR: \"%s\"\n\n", myddb_path);
+#ifdef WIN_OS
+	printf("\n DIR %s\\%s\n\n", path, myddb_path);
+#else
+	printf("\n DIR %s/%s\n\n", path, myddb_path);
+#endif
 
 	/* verify directory */
 	if (!(dir = opendir(myddb_path)))
@@ -1079,6 +1078,11 @@ void myddb_print (int fmt) {
 
 	if ((t = get_rows_and_columns(2))) {
 
+	#ifdef WIN_OS
+		/* UTF-8 output */
+		SetConsoleOutputCP(CP_UTF8);
+	#endif
+
 		int j = 0;
 
 		char *bar = NULL;
@@ -1118,5 +1122,10 @@ void myddb_print (int fmt) {
 		myddb_free(bar);
 		myddb_free(tmp);
 		free_rows_and_columns(t);
+
+	/* return console windows state */
+	#ifdef WIN_OS
+		SetConsoleOutputCP(output_state_shell);
+	#endif
 	}
 }
