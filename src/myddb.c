@@ -22,52 +22,42 @@ Copyright (c) 2020 Alberto Ferreira junior
 
 #include "myddb.h"
 
-const char *myddb_logo[] = {
- "\n MYD      BMY              BMYDDBMYD    YDDBMYDDB    DBMYDDBMYDD",
-	"MYDD    DBMY DDB      YDD BMYDDBMYDDB  YDDBMYDDBMY  DBMYDDBMYDDB",
-	"MYDDB  DDBMY  DBM    MYD  BMY     DDBM YDD     BMYD DBM     YDDB",
-	"MYDDBMYDDBMY   BMY  BMY   BMY      DBM YDD      MYD DBMYDDBMYDD",
-	"MYD BMYD BMY    MYDDBM    BMY      DBM YDD      MYD DBMYDDBMYDD",
-	"MYD  MY  BMY     YDDB     BMY     DDBM YDD     BMYD DBM     YDDB",
-	"MYD      BMY    MYDD      BMYDDBMYDDB  YDDBMYDDBMY  DBMYDDBMYDDB",
-	"MYD      BMY DDBMY        BMYDDBMYD    YDDBMYDDB    DBMYDDBMYDD\n",
-	"My Domestic Data Bank [v1.0 - 2020]\n (Type \"Help\" for more information)",
-	NULL
-};
+const char myddb_logo[] =
+	"\n MYD      BMY              BMYDDBMYD    YDDBMYDDB    DBMYDDBMYDD\n"
+	" MYDD    DBMY DDB      YDD BMYDDBMYDDB  YDDBMYDDBMY  DBMYDDBMYDDB\n"
+	" MYDDB  DDBMY  DBM    MYD  BMY     DDBM YDD     BMYD DBM     YDDB\n"
+	" MYDDBMYDDBMY   BMY  BMY   BMY      DBM YDD      MYD DBMYDDBMYDD\n"
+	" MYD BMYD BMY    MYDDBM    BMY      DBM YDD      MYD DBMYDDBMYDD\n"
+	" MYD  MY  BMY     YDDB     BMY     DDBM YDD     BMYD DBM     YDDB\n"
+	" MYD      BMY    MYDD      BMYDDBMYDDB  YDDBMYDDBMY  DBMYDDBMYDDB\n"
+	" MYD      BMY DDBMY        BMYDDBMYD    YDDBMYDDB    DBMYDDBMYDD\n\n"
+	" My Domestic Data Bank [v1.0 - 2020]\n (Type \"Help\" for more information)\n";
 
-const char *commands_list[] = {
-	"+------------------------------------------------------+",
-	"| COMMAND  EX                   DEFINITION             |",
-	"+------------------------------------------------------+",
-	"| PATH     /user/desktop        define database path   |",
-	"| FROM     from <file>          define table           |",
-	"| INSERT   name = Alberto       add row                |",
-	"| WHERE    name = Alberto       set column and row     |",
-	"| UPDATE   name = Alberto       update row             |",
-	"| DEL      name = Alberto       delete row             |",
-	"| CROSS    (id = 0 name = 1)    cross column and row   |",
-	"| COL      (id name date)       add colums             |",
-	"| DROP     (id name date)       drop colums            |",
-	"| JUMP     (name = 0 id = 2)    order colums           |",
-	"| CREATE   create <file>        create table           |",
-	"| ERASE    erase <file>         erase records of table |",
-	"| EXCLUDE  exclude <file>       exclude table          |",
-	"| PRINT    1 or 0               show tabela            |",
-	"| SHOW     show                 show database          |",
-	"| CLEAR    clear                clear screen           |",
-	"| VER      ver                  show MyDDB version     |",
-	"| CLOSE    or type dot (.)      close MyDDB            |",
-	"+------------------------------------------------------+",
-	NULL
-};
+const char commands_list[] =
+	"\n +------------------------------------------------------+\n"
+	" | COMMAND  EX                   DEFINITION             |\n"
+	" +------------------------------------------------------+\n"
+	" | PATH     /user/desktop        define database path   |\n"
+	" | FROM     from <file>          define table           |\n"
+	" | ADD      name = Alberto       add row                |\n"
+	" | WHERE    name = Alberto       set column and row     |\n"
+	" | UPDATE   name = Alberto       update row             |\n"
+	" | DEL      name = Alberto       delete row             |\n"
+	" | CROSS    (id = 0 name = 1)    cross column and row   |\n"
+	" | COL      (id cmp str = name)  add colums and update  |\n"
+	" | DROP     (id name date)       drop colums            |\n"
+	" | JUMP     (name = 0 id = 2)    order colums           |\n"
+	" | CREATE   create <file>        create table           |\n"
+	" | ERASE    erase <file>         erase records of table |\n"
+	" | EXCLUDE  exclude <file>       exclude table          |\n"
+	" | PRINT    0, 1, 2              show tabela format     |\n"
+	" | SHOW     show                 show database          |\n"
+	" | CLEAR    clear                clear screen           |\n"
+	" | VER      ver                  show MyDDB version     |\n"
+	" | CLOSE    or type dot (.)      close MyDDB            |\n"
+	" +------------------------------------------------------+\n";
 
-MYDDBTABLE *omyddb = NULL;
-FILE *myddb_file = NULL;
-char *myddb_path = NULL;
-char *myddb_name = NULL;
-bool  myddb_fempty = false; /* verify if file are empty or full */
-
-#ifdef WIN_OS
+#if !NIX_OS
 	int output_state_shell;
 #endif
 
@@ -79,6 +69,15 @@ int strlen_utf8 (const char *s) {
 			j++;
 	return j;
 }
+
+#if !NIX_OS
+char *strupr (char *s) {
+
+	for (char *p = s; *p; p++)
+		*p = toupper(*p);
+	return s;
+}
+#endif
 
 int64_t size_file (FILE *f) {
 
@@ -101,9 +100,9 @@ const char *strbytes (int64_t v) {
 
 void fmtsize (char *buf, int len, int64_t value) {
 
-	myddb_set(char, buf, 0, len);
+	myddb_memset(char, buf, 0, len);
 	char str[18];
-	snprintf(str, 18, "%I64d", value);
+	snprintf(str, 18, (!NIX_OS?"%I64d":"%ld"), value);
 	for (int i = 16, j = 0, k = strlen(str + 1); i >= 0; i--) {
 		buf[i] = ((j++ < 3) && (k >= 0) ? str[k--] : '.');
 		j = (buf[i] == '.' ? 0 : j);
@@ -115,6 +114,7 @@ MYDDBTABLE *get_rows_and_columns (int channel) {
 	int i = 0;
 	int j = 0;
 	int k = 0;
+	int h_len = 1;
 	int reach_line = DDBMIN;
 	int reach_table = DDBMIN;
 	uint8_t c = 0;
@@ -124,12 +124,15 @@ MYDDBTABLE *get_rows_and_columns (int channel) {
 	myddb_calloc(char, t->column, DDBMIN);
 
 	/* limit channel */
-	channel = (channel == 0 || channel > 2 || channel < 0 ? 1 : channel);
+	channel = ((channel == 0 || channel > 2 || channel < 0) ? 1 : channel);
 
 	if (channel > 1)
 		myddb_calloc(char, t->row, DDBMIN);
 
 	rewind(myddb_file);
+
+	/* set row_utf8 == 0 */
+	t->row_utf8 = 0;
 
 	/* read column */
 	while (true) {
@@ -139,21 +142,22 @@ MYDDBTABLE *get_rows_and_columns (int channel) {
 		if (feof(myddb_file))
 			break;
 
-		if (c == ETX) {
-			/* end of line */
-			t[i].column[j] = 0;
-			t[i].col_size = strlen_utf8(t[i].column);
-			t[i].max_size = t[i].col_size;
-			t->w += 1;
-			break;
-		} else if (c == GS) {
+		if (c == GS || c == ETX) {
+			/*{{{ ETX*/
 			/* group separator */
 			t[i].column[j] = 0;
 			t[i].col_size = strlen_utf8(t[i].column);
 			t[i].max_size = t[i].col_size;
+			/* get max size in the line */
+			if (t[i].col_size > t->max_line)
+				t->max_line = t[i].col_size;
+			t->w += 1;
+			/*}}} ETX*/
+			/* end of line */
+			if (c == ETX)
+				break;
 			i++;
 			j = 0;
-			t->w += 1;
 			/* more memory for table */
 			if (i >= (reach_table - 1))
 				myddb_realloc(MYDDBTABLE, t, (reach_table += DDBMIN));
@@ -162,7 +166,7 @@ MYDDBTABLE *get_rows_and_columns (int channel) {
 			/* more memory for column */
 			if (j >= (reach_line - 1))
 				myddb_realloc(char, t[i].column, (reach_line += DDBMIN));
-			t[i].col_utf8 = isutf8(c);
+			t[i].col_utf8 += isutf8(c);
 			t[i].column[j++] = c;
 		}
 	}
@@ -178,6 +182,8 @@ MYDDBTABLE *get_rows_and_columns (int channel) {
 	j = 0;
 	reach_line = DDBMIN;
 	reach_table = DDBMIN;
+	/* set row_utf8 == 0 */
+	t->row_utf8 = 0;
 
 	/* read rows */
 	while (channel == 2) {
@@ -188,18 +194,30 @@ MYDDBTABLE *get_rows_and_columns (int channel) {
 			break;
 
 		if (c == ETX) {
-			t[i].row[j] = 0;
 			t->h += 1;
+			/* get error */
+			if ((t->w - 1) != k) {
+				free_rows_and_columns(t);
+				warning(W10, myddb_name, return NULL);
+			}
 		}
 
 		if (c == GS || c == ETX) {
 			t[i].row[j] = 0;
 			t[i].row_size = strlen_utf8(t[i].row);
 			k = (k == t->w ? 0 : k);
+			/* get max row size */
 			if (t[i].row_size > t[k].max_size)
 				t[k].max_size = t[i].row_size;
+			/* get max size in the line */
+			if (t[i].row_size > t[h_len].max_line)
+				t[h_len].max_line = t[i].row_size;
+			// printf(" %d:%.2d [%s]\n", h_len, t[h_len].max_line, t[i].row);
+			h_len = (t->h + 1);
 			k++;
 			i++;
+			/* reset t[i].row_utf8 */
+			t[i].row_utf8 = 0;
 			j = 0;
 			/* more memory for table */
 			if (i >= (reach_table - 1))
@@ -258,6 +276,12 @@ bool verify_requested_columns (MYDDBTABLE *t, int *error) {
 
 void get_args (const char *str, int channel) {
 
+	/*
+	 * get_args("str", 1) get only columns
+	 * get_args("str", 2) get columns and rows
+	 * get_args("str", 3) get columns or rows
+	 */
+
 	int i = 0;
 	int reach = DDBMIN;
 	char *buf = NULL;
@@ -269,21 +293,39 @@ void get_args (const char *str, int channel) {
 	}
 
 	/* split args */
-	char *arr = strtok(strcpy(buf, str), "\003=");
+	char *arr = strtok(strcpy(buf, str), "\003");
 	do {
-		omyddb[i].oselect = strdup(arr);
-		if (channel == 2) {
-			arr = strtok(NULL, "\003=");
-			/* substitute GS for 'space(32)' */
-			for (char *b = arr; *b; b++)
-				*b = (*b == GS ? ' ' : *b);
-			omyddb[i].oinsert = strdup(arr);
+		bool assignment = !!strchr(arr, '=');
+		/* get column */
+		if (channel == 1) {
+			omyddb[i].oselect = strdup(arr);
+			if (assignment)
+				warning(E06, arr, RBREAK);
+		/* get column and row */
+		} else if (channel == 2 || channel == 3) {
+			if (assignment) {
+				char *tmp = strdup(arr);
+				char *t = tmp;
+				while (*t && *t++ != '=');
+				*--t = 0;
+				t++;
+				omyddb[i].oselect = strdup(tmp);
+				/* substitute GS for 'space(32)' */
+				for (char *b = t; *b; b++)
+					*b = (*b == GS ? ' ' : *b);
+				omyddb[i].oinsert = strdup(t);
+				myddb_free(tmp);
+			} else if (channel == 3) {
+				omyddb[i].oselect = strdup(arr);
+				omyddb[i].oinsert = strdup(_ETX);
+			} else
+				warning(E05, arr, RBREAK);
 		}
 		i++;
 		/* add more memory */
 		if (i >= (reach - 1))
 			myddb_realloc(MYDDBTABLE, omyddb, (reach += DDBMIN));
-	} while ((arr = strtok(NULL, "\003=")) != NULL);
+	} while ((arr = strtok(NULL, "\003")) != NULL);
 
 	omyddb->olot = i;
 	free(buf);
@@ -309,6 +351,9 @@ void free_get_args (void) {
 }
 
 void format_command (char *cmd) {
+
+	if (!*cmd)
+		return;
 
 	char *buf = strdup(cmd);
 	char *a = buf;
@@ -386,7 +431,7 @@ void treat_file_path (char *des, const char *file) {
 
 	/*  concatenate '.ddb' in the end */
 	if (*myddb_path && !strstr(file, MYDDB_DOT_TYPE))
-		sprintf(des, "%s/%s%s", myddb_path, file, MYDDB_DOT_TYPE);
+		sprintf(des, "%s" OS_BAR "%s%s", myddb_path, file, MYDDB_DOT_TYPE);
 }
 
 int myddb_cmd_error (char *cmd) {
@@ -422,11 +467,14 @@ int myddb (const char *str, ...) {
 	char **cmdline = NULL;
 
 	/* resolve print arg */
-	myddb_malloc(char, buf, DDBMID);
+	myddb_calloc(char, buf, DDBMID);
 	va_list ap;
 	va_start(ap, str);
 	vsprintf(buf, str, ap);
 	va_end(ap);
+
+	if (!*buf)
+		goto myddb_exit;
 
 	/* format input argument */
 	format_command(buf);
@@ -466,7 +514,7 @@ int myddb (const char *str, ...) {
 				if (!*cmdline[i+1] || cmditer == 1)
 					warning(E03, cmdline[i], RBREAK);
 				if (myddb_open(cmdline[i+1]))
-					return EXIT_FAILURE;
+					goto myddb_exit;
 				break;
 			case 2: /*############### ADD ###############*/
 				if (myddb_cmd_error(cmdline[i+1]))
@@ -494,7 +542,7 @@ int myddb (const char *str, ...) {
 				free_get_args();
 				break;
 			case 6:/*############### CROSS ###############*/
-				get_args(cmdline[i+1], 2);
+				get_args(cmdline[i+1], 3);
 				myddb_cross();
 				break;
 			case 7: /*############### PRINT ###############*/
@@ -505,9 +553,7 @@ int myddb (const char *str, ...) {
 				myddb_print(atoi(cmdline[i+1]));
 				break;
 			case 8: /*############### HELP ###############*/
-				printf("\n");
-				for (int k = 0; commands_list[k]; k++)
-					printf(" %s\n", commands_list[k]);
+				printf(commands_list);
 				i--; /* no argument */
 				break;
 			case 9: /*############### COL ###############*/
@@ -515,7 +561,7 @@ int myddb (const char *str, ...) {
 					warning(E02, cmdline[i], RBREAK);
 				if (!*cmdline[i+1])
 					warning(E03, cmdline[i], RBREAK);
-				get_args(cmdline[i+1], 1);
+				get_args(cmdline[i+1], 3);
 				myddb_column();
 				free_get_args();
 				break;
@@ -557,16 +603,11 @@ int myddb (const char *str, ...) {
 				myddb_exclude(cmdline[i+1]);
 				break;
 			case 16: /*############### CLEAR ###############*/
-			#ifdef WIN_OS
-				system("cls");
-			#else /* Linux / MacOS */
-				system("clear");
-			#endif
+				system(!NIX_OS ? "cls" : "clear");
 				break;
 				/*############### VER ###############*/
 			case 17:
-				for (int k = 0; myddb_logo[k]; k++)
-					printf(" %s\n", myddb_logo[k]);
+				printf(myddb_logo);
 				i--; /* no argument */
 				break;
 				/*############### CLOSE ###############*/
@@ -596,9 +637,15 @@ myddb_exit:
 void myddb_init (void) {
 
 	/* get console state */
-#ifdef WIN_OS
+#if !NIX_OS
 	output_state_shell = GetConsoleOutputCP();
 #endif
+
+	omyddb = NULL;
+	myddb_file = NULL;
+	myddb_path = NULL;
+	myddb_name = NULL;
+	myddb_fempty = false; /* verify if file are empty or full */
 
 	myddb_calloc(char, myddb_path, DDBMAX);
 	myddb_calloc(char, myddb_name, DDBMAX);
@@ -626,7 +673,7 @@ int myddb_open (const char *file) {
 	/* verify directory */
 	if (!(dir = opendir(myddb_path))) {
 		strcpy(myddb_path, ".");
-		myddb_set(char, myddb_name, 0, DDBMAX);
+		myddb_memset(char, myddb_name, 0, DDBMAX);
 		warning(W00, myddb_path, RINT);
 	}
 	closedir(dir);
@@ -639,7 +686,7 @@ int myddb_open (const char *file) {
 		myddb_fclose(myddb_file);
 	if (!(myddb_file = fopen(myddb_name, "r+"))) {
 		warning(W06, myddb_name, RINT);
-		myddb_set(char, myddb_name, 0, DDBMAX);
+		myddb_memset(char, myddb_name, 0, DDBMAX);
 		return true;
 	}
 
@@ -664,11 +711,7 @@ void myddb_show (void) {
 
 	/* getcwd - get the pathname of the current working directory */
 	getcwd(path, DDBMIN);
-#ifdef WIN_OS
-	printf("\n DIR %s\\%s\n\n", path, myddb_path);
-#else
-	printf("\n DIR %s/%s\n\n", path, myddb_path);
-#endif
+	printf("\n DIR %s" OS_BAR "%s\n\n", path, myddb_path);
 
 	/* verify directory */
 	if (!(dir = opendir(myddb_path)))
@@ -676,7 +719,7 @@ void myddb_show (void) {
 
 	/* get files */
 	while ((entry = readdir(dir))) {
-		snprintf(path, DDBMIN, "%s/%s", myddb_path, entry->d_name);
+		snprintf(path, DDBMAX, "%s" OS_BAR "%s", myddb_path, entry->d_name);
 		if (strstr(entry->d_name, MYDDB_DOT_TYPE)) {
 			if ((file = fopen(path, "r"))) {
 				msize = size_file(file);
@@ -703,37 +746,40 @@ void myddb_insert (void) {
 
 	int *v = NULL;
 	int error;
-	MYDDBTABLE *t = get_rows_and_columns(1);
+	MYDDBTABLE *t = NULL;
 
-	myddb_calloc(int, v, (t->w + 1));
+	if ((t = get_rows_and_columns(1)) != NULL) {
 
-	/* verify columns */
-	if (verify_requested_columns(t, &error))
-		warning(W03, omyddb[error].oselect, goto insert_exit);
+		myddb_calloc(int, v, (t->w + 1));
 
-	/* find column order */
-	for (int i = 0; i < omyddb->olot; i++)
-		for (int j = 0; j < t->w; j++)
-			if (!strcmp(t[j].column, omyddb[i].oselect)) {
-				v[i] = j;
-				break;
-			}
+		/* verify columns */
+		if (verify_requested_columns(t, &error))
+			warning(W03, omyddb[error].oselect, goto insert_exit);
 
-	/* write row */
-	fseek(myddb_file, size_file(myddb_file), SEEK_SET);
-	for (int i = 0; i < t->w; i++) {
-		for (int j = 0; j < omyddb->olot; j++)
-			if (v[j] == i) {
-				fprintf(myddb_file, "%s", omyddb[j].oinsert);
-				break;
-			}
-		fprintf(myddb_file, "%c", gfret(i, (t->w - 1)));
+		/* find column order */
+		for (int i = 0; i < omyddb->olot; i++)
+			for (int j = 0; j < t->w; j++)
+				if (!strcmp(t[j].column, omyddb[i].oselect)) {
+					v[i] = j;
+					break;
+				}
+
+		/* write row */
+		fseek(myddb_file, size_file(myddb_file), SEEK_SET);
+		for (int i = 0; i < t->w; i++) {
+			for (int j = 0; j < omyddb->olot; j++)
+				if (v[j] == i) {
+					fprintf(myddb_file, "%s", omyddb[j].oinsert);
+					break;
+				}
+			fprintf(myddb_file, "%c", gfret(i, (t->w - 1)));
+		}
+
+	insert_exit:
+
+		myddb_free(v);
+		free_rows_and_columns(t);
 	}
-
-insert_exit:
-
-	myddb_free(v);
-	free_rows_and_columns(t);
 }
 
 void myddb_delete (void) {
@@ -741,6 +787,9 @@ void myddb_delete (void) {
 	int error;
 	int *v = NULL;
 	MYDDBTABLE *t = get_rows_and_columns(2);
+
+	if (t == NULL)
+		return;
 
 	/* verify columns */
 	if (verify_requested_columns(t, &error))
@@ -792,6 +841,9 @@ void myddb_update (void) {
 	int error;
 	MYDDBTABLE *t = get_rows_and_columns(2);
 
+	if (t == NULL)
+		return;
+
 	if (omyddb->row_match == -1)
 		warning(E01, "NULL", RVOID);
 
@@ -831,6 +883,9 @@ void myddb_cross (void) {
 	MYDDBTABLE *t = get_rows_and_columns(2);
 	omyddb->row_match = -1;
 
+	if (t == NULL)
+		return;
+
 	/* verify columns */
 	if (verify_requested_columns(t, &error))
 		warning(W03, omyddb[error].oselect, RVOID);
@@ -844,7 +899,7 @@ void myddb_cross (void) {
 				for (int y = 0; !match && y < t->h; y++)
 					for (int x = 0; !match && x < t->w; x++)
 						/* search row */
-						if (!strcmp(t[coor(x,y)].row, omyddb[j].oinsert)) {
+						if (!strcmp(t[coor(x,y)].row, omyddb[j].oinsert) || *omyddb[j].oinsert == ETX) {
 							/* NOTE: cross, it will only malloc omyddb[j].out */
 							omyddb[j].out = strdup(t[coor(i,y)].row);
 							match = true;
@@ -861,38 +916,56 @@ void myddb_column (void) {
 	int extra = 0;
 	MYDDBTABLE *t = get_rows_and_columns(2);
 
+	if (t == NULL)
+		return;
+
 	/* verify existent column */
 	for (int j = 0; j < omyddb->olot; j++) {
 		for (int i = 0; i <= t->w; i++) {
 			/* fill columns */
 			if (i == t->w) {
-				int e = (t->w + extra);
-				/* add more memory to the table */
-				if ((t->w * t->h) < omyddb->olot)
-					myddb_realloc(MYDDBTABLE, t, (t->w + omyddb->olot));
-				t[e].column = strdup(omyddb[j].oselect);
-				extra++;
-			} else if (!strcmp(omyddb[j].oselect, t[i].column))
-				warning(W04, t[j].column, goto column_exit);
+				if (*omyddb[j].oinsert == ETX) {
+					int e = (t->w + extra);
+					/* add more memory to the table */
+					if ((t->w * t->h) < omyddb->olot)
+						myddb_realloc(MYDDBTABLE, t, (t->w + omyddb->olot));
+					t[e].column = strdup(omyddb[j].oselect);
+					extra++;
+				}
+			} else if (!strcmp(omyddb[j].oselect, t[i].column)) {
+				/* update column */
+				if (*omyddb[j].oinsert != ETX) {
+					/* verify existent new column */
+					int k;
+					for (k = 0; k < t->w; k++)
+						if (!strcmp(omyddb[j].oinsert, t[k].column))
+							warning(W04, omyddb[j].oinsert, RBREAK)
+					/* update */
+					if (k == t->w) {
+						printf("\n [!] myddb: col update (\"%s\" -> \"%s\")\n", t[i].column, omyddb[j].oinsert);
+						myddb_free(t[i].column);
+						t[i].column = strdup(omyddb[j].oinsert);
+					}
+					break;
+				} else /* error */
+					warning(W04, omyddb[j].oselect, RBREAK)
+			}
 		}
 	}
 
-	/* rewrite columns */
-	for (int i = 0; i < t->w + extra; i++)
-		fprintf(myddb_file, "%s%c", t[i].column, gfret(i, ((t->w + extra) - 1)));
+	if ((myddb_file = freopen(myddb_name, "w", myddb_file))) {
+		/* rewrite columns */
+		for (int i = 0; i < t->w + extra; i++)
+			fprintf(myddb_file, "%s%c", t[i].column, gfret(i, ((t->w + extra) - 1)));
+		/* rewrite row */
+		for (int y = 0; y < t->h; y++)
+			for (int x = 0; x < (t->w + extra); x++)
+				fprintf(myddb_file, "%s%c", (x < t->w ? t[coor(x, y)].row : ""), gfret(x, (t->w + extra) - 1));
+		myddb_file = freopen(myddb_name, "r+", myddb_file);
+	}
 
-	/* rewrite row */
-	for (int y = 0; y < t->h; y++)
-		for (int x = 0; x < (t->w + extra); x++) {
-			if (x < t->w)
-				fprintf(myddb_file, "%s%c", t[coor(x, y)].row, GS);
-			else
-				fprintf(myddb_file, "%c", gfret(x, (t->w + extra) - 1));
-		}
-
-	printf("\n [!] myddb: column(s) created\n");
-
-column_exit:
+	if (extra)
+		printf("\n [!] myddb: column(s) created\n");
 
 	/* filled file */
 	myddb_fempty = true;
@@ -905,6 +978,9 @@ void myddb_jump (void) {
 	int target = 0;
 	int *v = NULL;
 	MYDDBTABLE *t = get_rows_and_columns(2);
+
+	if (t == NULL)
+		return;
 
 	/* verify columns */
 	if (verify_requested_columns(t, &error))
@@ -954,6 +1030,9 @@ void myddb_drop (void) {
 	int col = 0;
 	int *v = NULL;
 	MYDDBTABLE *t = get_rows_and_columns(2);
+
+	if (t == NULL)
+		return;
 
 	/* erase table */
 	FILE *f = NULL;
@@ -1073,49 +1152,70 @@ exclude_exit:
 
 void myddb_print (int fmt) {
 
-	#define len(i) (fmt ? t[i].max_size : t[i].col_size)
 	MYDDBTABLE *t = NULL;
 
-	if ((t = get_rows_and_columns(2))) {
+	/* set limit format */
+	fmt = (fmt > 2 ? 2 : (fmt < 0 ? 0 : fmt));
 
-	#ifdef WIN_OS
-		/* UTF-8 output */
-		SetConsoleOutputCP(CP_UTF8);
-	#endif
+	if ((t = get_rows_and_columns(2)) != NULL) {
 
 		int j = 0;
-
+		(void) j;
 		char *bar = NULL;
 		char *tmp = NULL;
 
 		myddb_malloc(char, bar, DDBMAX);
 		myddb_calloc(char, tmp, DDBMAX);
-		myddb_set(char, bar, '-', DDBMAX);
+		myddb_memset(char, bar, '-', DDBMAX);
+
+	#if !NIX_OS
+		/* UTF-8 output */
+		SetConsoleOutputCP(CP_UTF8);
+	#endif
 
 		/* create bar */
 		*bar = '+';
-		for (int i = 0; i < t->w; i++)
-			bar[j += len(i) + 1] = '+';
+		if (fmt == 2)
+			bar[j += t->max_line + 1] = '+';
+		for (int i = 0; i < (fmt < 2 ? t->w : t->h); i++) {
+			if (fmt == 0) bar[j += t[i].col_size + 1] = '+';
+			if (fmt == 1) bar[j += t[i].max_size + 1] = '+';
+			if (fmt == 2) bar[j += t[i + 1].max_line + 1] = '+';
+		}
 		bar[j + 1] = '\0';
 
 		/* show columns */
-		printf("\n%s\n|", bar);
-		for (int i = 0; i < t->w; i++)
-			printf("%-*s|", len(i) + t[i].col_utf8, t[i].column);
-		printf("\n%s\n", bar);
+		if (fmt < 2) {
+			printf("\n%s\n|", bar);
+			for (int i = 0; i < t->w; i++) {
+				if (fmt == 0) printf("%-*s|", t[i].col_size + t[i].col_utf8, t[i].column);
+				if (fmt == 1) printf("%-*s|", t[i].max_size + t[i].col_utf8, t[i].column);
+			}
+		}
 
-		/* show row */
-		for (int k = 0; k < t->h; k++) {
-			for (int i = 0; i < t->w; i++) { /* set column */
-				j = coor(i, k); /* set row */
-				if (!fmt) { /* short */
+		printf("\n%s\n", bar);
+		for (int k = 0; k < (fmt < 2 ? t->h : t->w); k++) {
+
+			/* column list */
+			if (fmt == 2)
+				printf("|%-*s", t->max_line + t[k].col_utf8, t[k].column);
+
+			for (int i = 0; i < (fmt < 2 ? t->w : t->h); i++) {
+				/* set row */
+				if (fmt != 2) j = coor(i, k);
+				if (fmt == 2) j = coor(k, i);
+				/* short */
+				if (fmt == 0) {
 					t[j].row[t[i].col_size + t[j].row_utf8] = 0;
-					sprintf(tmp, "%s%*s|", strcat(tmp, t[j].row), (t[i].col_size - (int) strlen(t[j].row)) + t[j].row_utf8, "");
-				} else /* long */
-					sprintf(tmp, "%s%*s|", strcat(tmp, t[j].row), (t[i].max_size - t[j].row_size), "");
+					snprintf(tmp, DDBMAX, "%s%*s|", strcat(tmp, t[j].row), (t[i].col_size - (int) strlen(t[j].row)) + t[j].row_utf8, "");
+				}
+				/* long */
+				if (fmt == 1) snprintf(tmp, DDBMAX, "%s%*s|", strcat(tmp, t[j].row), (t[i].max_size - t[j].row_size), "");
+				/* list */
+				if (fmt == 2) snprintf(tmp, DDBMAX, "%s%*s|", strcat(tmp, t[j].row), (t[i + 1].max_line - t[j].row_size), "");
 			}
 			printf("|%s\n", tmp); /* single line, fast print */
-			myddb_set(char, tmp, 0, DDBMAX);
+			*tmp = 0;
 		}
 		printf("%s\n", bar);
 
@@ -1124,7 +1224,7 @@ void myddb_print (int fmt) {
 		free_rows_and_columns(t);
 
 	/* return console windows state */
-	#ifdef WIN_OS
+	#if !NIX_OS
 		SetConsoleOutputCP(output_state_shell);
 	#endif
 	}
