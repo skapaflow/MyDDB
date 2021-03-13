@@ -39,12 +39,14 @@ Copyright (c) 2020 Alberto Ferreira junior
 #include <stdarg.h>
 #include <stdlib.h>
 #include <dirent.h>
+#include <unistd.h>
 #include <stdbool.h>
 
 #if defined(_WIN32) || defined(_WIN64) || defined(__WIN32__) || defined(WIN32)
 	#include <windows.h>
-	#include <conio.h>
-	#define WIN_OS
+	#define NIX_OS 0
+#else
+	#define NIX_OS 1
 #endif
 
 #ifdef __cplusplus
@@ -57,7 +59,7 @@ extern "C" {
 
 #define ETX 3       /* end of text            */
 #define _ETX "\003" /* (oct) end of text      */
-#define GS 29       /* groupe separator       */
+#define GS 29       /* group separator        */
 #define _GS "\035"  /* (oct) groupe separator */
 
 #define MYDDB_DOT_TYPE ".ddb"
@@ -66,7 +68,9 @@ extern "C" {
 #define E01 "\n [!] myddb_error:%d: command \"%s\" without antecedent WHERE\n"
 #define E02 "\n [!] myddb_error:%d: command \"%s\" without antecedent FROM\n"
 #define E03 "\n [!] myddb_error:%d: command \"%s\" without arguments\n"
-#define E04 "\n [!] myddb_error:%d: command \"%s\" without sinal de atribuição em seu argumento\n"
+#define E04 "\n [!] myddb_error:%d: command \"%s\" no attribution sign in your argument\n"
+#define E05 "\n [!] myddb_error:%d: command \"%s\" assignment required\n"
+#define E06 "\n [!] myddb_error:%d: command \"%s\" assignment not required\n"
 
 #define W00 "\n [!] myddb_warning:%d: directory \"%s\" unexistent\n"
 #define W01 "\n [!] myddb_warning:%d: argument \"%s\" repeated\n"
@@ -99,71 +103,62 @@ extern "C" {
 #define GB    999999999999	/* 4 byte - gigabyte */
 #define TB 999999999999999	/* 5 byte - terabyte */
 
-#ifdef WIN_OS
+#ifdef NIX_OS
+	#define OS_BAR "\\"
 	#define myddb_ftell _ftelli64
 #else
+	#define OS_BAR "/"
 	#define myddb_ftell ftello
 #endif
 
-#define error(...) printf("\t:%d:\n", __LINE__)
-#define stop(...) printf("\t:%d:\n", __LINE__), getch()
 #define warning(a,b,_return) {printf(a,__LINE__,b); _return;}
 
+#define myddb_security(a,b) (a >= b ? b : (a < 0 ? 0 : a))
 #define isutf8(c) (((c)&0xc0)==0x80)
 #define coor(x,y) (int) (abs(x) + (abs(y) * (t->w)))
 #define gfret(a,b) (a < b ? GS : ETX) /* guitar fret */
 
-#define myddb_set(c,v,i,n) memset((c*)v, i, sizeof(c)*n)
+#define myddb_malloc(c,v,n) myddb_alloc(c,v,malloc(sizeof(c) * n), "malloc")
+#define myddb_calloc(c,v,n) myddb_alloc(c,v,calloc(n, sizeof(c)), "calloc")
+#define myddb_realloc(c,v,n) myddb_alloc(c,v,realloc(v, sizeof(c) * n), "realloc")
 #define myddb_free(f) if (f != NULL) free(f), f = NULL
 #define myddb_fclose(f) if (f != NULL) fclose(f), f = NULL
-
-#define myddb_malloc(c,v,n)\
-	if ((v = (c*) malloc(sizeof(c) * n)) == NULL) {\
-		printf("\n [!] malloc_error:\"%s\":%d\n", __FILE__, __LINE__);\
-		getch();\
+#define myddb_memset(c,v,i,n) memset((c*)v, i, sizeof(c)*n)
+#define myddb_alloc(c,v,m,s) \
+	if ((v = (c*) m) == NULL) {\
+		printf("\n [!] error_"s":\"%s\":%d\n", __FILE__, __LINE__);\
+		getchar();\
 		exit(EXIT_FAILURE);\
 	}\
-
-#define myddb_calloc(c,v,n)\
-	if ((v = (c*) calloc(n, sizeof(c))) == NULL) {\
-		printf("\n [!] calloc_error:\"%s\":%d\n", __FILE__, __LINE__);\
-		getch();\
-		exit(EXIT_FAILURE);\
-	}\
-
-#define myddb_realloc(c,v,n)\
-	if ((v = (c*) realloc(v, sizeof(c) * n)) == NULL) {\
-		printf("\n [!] realloc_error:\"%s\":%d\n", __FILE__, __LINE__);\
-		getch();\
-		exit(EXIT_FAILURE);\
-	}\
-
-extern const char *myddb_logo[];
-extern const char *commands_list[];
-extern FILE *myddb_file;
-extern char *myddb_path;
-extern char *myddb_name;
-extern bool  myddb_fempty; /* verify if file are empty or full */
 
 typedef struct {
-	int w;          /* number of columns */
-	int h;          /* number of rows */
-	int olot;       /* output number */
-	int row_size;   /* row string size */
-	int col_size;   /* column string size */
-	int max_size;   /* max string size per column */
+	int w;          /* number of columns (->)          */
+	int h;          /* number of rows (->)             */
+	int olot;       /* output number (->)              */
+	int row_size;   /* row string size                 */
+	int col_size;   /* column string size              */
+	int max_line;   /* line string, max size           */
+	int max_size;   /* max string size per column      */
 	int col_utf8;   /* number of utf-8 char per column */
-	int row_utf8;   /* number of utf-8 char per row */
-	int row_match;  /* cross table index */
-	char *out;      /* output buffer */
-	char *row;      /* row buffer */
-	char *tmp;      /* tmp buffer */
-	char *column;   /* column buffer */
-	char *oselect;  /* column buffer selection */
-	char *oinsert;  /* input buffer insertion */
+	int row_utf8;   /* number of utf-8 char per row    */
+	int row_match;  /* cross table index               */
+	char *out;      /* output buffer                   */
+	char *row;      /* row buffer                      */
+	char *tmp;      /* tmp buffer                      */
+	char *column;   /* column buffer                   */
+	char *oselect;  /* column buffer selection         */
+	char *oinsert;  /* input buffer insertion          */
 } MYDDBTABLE;
 
-extern MYDDBTABLE *omyddb;
+MYDDBTABLE *omyddb;
+
+FILE *myddb_file;
+char *myddb_path;
+char *myddb_name;
+bool  myddb_fempty; /* verify if file are empty or full */
+
+extern const char myddb_logo[];
+extern const char commands_list[];
 
 int strlen_utf8 (const char *);
 int64_t size_file (FILE *);
@@ -199,7 +194,6 @@ void myddb_erase (const char *);
 void myddb_exclude (const char *);
 
 void myddb_print (int);
-
 
 #ifdef __cplusplus
 }
