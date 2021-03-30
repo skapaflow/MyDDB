@@ -262,7 +262,7 @@ void free_rows_and_columns (MYDDBTABLE *t) {
 
 bool verify_requested_columns (MYDDBTABLE *t, int *error) {
 
-	for (int i = 0; i < omyddb->olot; i++)
+	for (int i = 0; i < omyddb->lot; i++)
 		for (int j = 0; j <= t->w; j++) {
 			if (j == t->w) {
 				*error = i;
@@ -284,12 +284,17 @@ void get_args (const char *str, int channel) {
 
 	int i = 0;
 	int reach = DDBMIN;
-	char *buf = NULL;
-	myddb_malloc(char, buf, DDBMID);
+	char *buf = strdup(str);
 
 	if (omyddb == NULL) {
-		myddb_calloc(MYDDBTABLE, omyddb, DDBMIN);
-		omyddb->olot = 0;
+		/* count requisitions by ETX */
+		int x = 1;
+		const char *b = str;
+		while (*b)
+			if (*b++ == ETX)
+				x++;
+		myddb_calloc(MYDDBTABLE, omyddb, x);
+		omyddb->lot = 0;
 	}
 
 	/* split args */
@@ -327,12 +332,12 @@ void get_args (const char *str, int channel) {
 			myddb_realloc(MYDDBTABLE, omyddb, (reach += DDBMIN));
 	} while ((arr = strtok(NULL, "\003")) != NULL);
 
-	omyddb->olot = i;
+	omyddb->lot = i;
 	free(buf);
 
 #if 0
 	printf("\n ");
-	for (int j = 0; j < omyddb->olot; j++)
+	for (int j = 0; j < omyddb->lot; j++)
 		printf("%s=%s|", omyddb[j].oselect, omyddb[j].oinsert);
 	printf("\n");
 #endif
@@ -341,7 +346,7 @@ void get_args (const char *str, int channel) {
 void free_get_args (void) {
 
 	if (omyddb != NULL) {
-		for (int i = 0; i < omyddb->olot; i++) {
+		for (int i = 0; i < omyddb->lot; i++) {
 			myddb_free(omyddb[i].oselect);
 			myddb_free(omyddb[i].oinsert);
 			myddb_free(omyddb[i].out);
@@ -363,10 +368,10 @@ void format_command (char *cmd) {
 	/* strdup: get internal error from malloc into strdup */
 	if (buf == NULL) {
 		printf("\n [!] strdup_error:\"%s\":%d\n", __FILE__, __LINE__);
-		return; 
+		return;
 	}
 
-	/* treat quotes */
+	/* treat quotes (32 to GS) */
 	do {
 		if (*b == '\'' || *b == '\"') {
 			char s = *b;
@@ -394,7 +399,7 @@ void format_command (char *cmd) {
 
 	b = buf;
 
-	/* separate sintax */
+	/* separate sintax (32 or ',' == ETX) */
 	do {
 		if (*b == '(')
 			while (*++b != ')') {
@@ -403,7 +408,7 @@ void format_command (char *cmd) {
 					while (*b != s)
 						b++;
 				}
-				*b = (*b == ' ' ? ETX : *b);
+				*b = (*b == ' ' || *b == ',' ? ETX : *b);
 			}
 	} while (*b++);
 
@@ -462,12 +467,12 @@ int myddb (const char *str, ...) {
 	};
 
 	int cmditer = 0;
-	int return_exit = EXIT_FAILURE;
+	int return_exit = EXIT_FAILURE; /* 1 error */
 	char *buf = NULL;
 	char **cmdline = NULL;
 
 	/* resolve print arg */
-	myddb_calloc(char, buf, DDBMID);
+	myddb_calloc(char, buf, DDBMAX);
 	va_list ap;
 	va_start(ap, str);
 	vsprintf(buf, str, ap);
@@ -480,7 +485,7 @@ int myddb (const char *str, ...) {
 	format_command(buf);
 
 	/* decompose commands */
-	myddb_malloc(char *, cmdline, DDBMIN);
+	myddb_malloc(char *, cmdline, DDBMAX);
 	char *aux = strtok(buf, " ");
 	do {
 		cmdline[cmditer++] = strdup(aux);
@@ -613,7 +618,7 @@ int myddb (const char *str, ...) {
 				/*############### CLOSE ###############*/
 			case 18:
 			case 19:
-				return_exit = EXIT_SUCCESS;
+				return_exit = EXIT_SUCCESS; /* 0 error */
 				myddb_fclose(myddb_file);
 				break;
 				/*############### ERRO ###############*/
@@ -757,7 +762,7 @@ void myddb_insert (void) {
 			warning(W03, omyddb[error].oselect, goto insert_exit);
 
 		/* find column order */
-		for (int i = 0; i < omyddb->olot; i++)
+		for (int i = 0; i < omyddb->lot; i++)
 			for (int j = 0; j < t->w; j++)
 				if (!strcmp(t[j].column, omyddb[i].oselect)) {
 					v[i] = j;
@@ -767,7 +772,7 @@ void myddb_insert (void) {
 		/* write row */
 		fseek(myddb_file, size_file(myddb_file), SEEK_SET);
 		for (int i = 0; i < t->w; i++) {
-			for (int j = 0; j < omyddb->olot; j++)
+			for (int j = 0; j < omyddb->lot; j++)
 				if (v[j] == i) {
 					fprintf(myddb_file, "%s", omyddb[j].oinsert);
 					break;
@@ -798,7 +803,7 @@ void myddb_delete (void) {
 	myddb_calloc(int, v, (t->h + 1));
 
 	/* search column and row */
-	for (int j = 0; j < omyddb->olot; j++) {
+	for (int j = 0; j < omyddb->lot; j++) {
 		bool match = false;
 		for (int x = 0; !match && x < t->w; x++) /* column index */
 			if (!(strcmp(t[x].column, omyddb[j].oselect)))
@@ -852,7 +857,7 @@ void myddb_update (void) {
 		warning(W03, omyddb[error].oselect, RVOID);
 
 	/* search row and column */
-	for (int i = 0; i < omyddb->olot; i++)
+	for (int i = 0; i < omyddb->lot; i++)
 		for (int x = 0; x < t->w; x++)
 			if (!strcmp(omyddb[i].oselect, t[x].column)) {
 				strcpy(t[coor(x, omyddb->row_match)].row, omyddb[i].oinsert);
@@ -890,12 +895,12 @@ void myddb_cross (void) {
 	if (verify_requested_columns(t, &error))
 		warning(W03, omyddb[error].oselect, RVOID);
 
-	for (int j = 0; j < omyddb->olot; j++) {
+	for (int j = 0; j < omyddb->lot; j++) {
 		/* search column and row */
 		for (int i = 0; i < t->w; i++) {
 			bool match = false;
 			/* search column  */
-			if (!(strcmp(t[i].column, omyddb[j].oselect)))
+			if (!(strcmp(t[i].column, omyddb[j].oselect))) {
 				for (int y = 0; !match && y < t->h; y++)
 					for (int x = 0; !match && x < t->w; x++)
 						/* search row */
@@ -905,6 +910,7 @@ void myddb_cross (void) {
 							match = true;
 							omyddb->row_match = y;
 						}
+			}
 		}
 	}
 
@@ -920,15 +926,15 @@ void myddb_column (void) {
 		return;
 
 	/* verify existent column */
-	for (int j = 0; j < omyddb->olot; j++) {
+	for (int j = 0; j < omyddb->lot; j++) {
 		for (int i = 0; i <= t->w; i++) {
 			/* fill columns */
 			if (i == t->w) {
 				if (*omyddb[j].oinsert == ETX) {
 					int e = (t->w + extra);
 					/* add more memory to the table */
-					if ((t->w * t->h) < omyddb->olot)
-						myddb_realloc(MYDDBTABLE, t, (t->w + omyddb->olot));
+					if ((t->w * t->h) < omyddb->lot)
+						myddb_realloc(MYDDBTABLE, t, (t->w + omyddb->lot));
 					t[e].column = strdup(omyddb[j].oselect);
 					extra++;
 				}
@@ -991,7 +997,7 @@ void myddb_jump (void) {
 		v[i] = i;
 
 	/* find the order of the columns */
-	for (int i = 0, j; i < omyddb->olot; i++) {
+	for (int i = 0, j; i < omyddb->lot; i++) {
 		/* find static column index */
 		for (j = 0, target = 0; j < t->w; j++)
 			if (!strcmp(t[j].column, omyddb[i].oselect))
@@ -1049,7 +1055,7 @@ void myddb_drop (void) {
 
 	/* drop column */
 	for (int i = 0; i < t->w; i++)
-		for (int j = 0; j < omyddb->olot; j++)
+		for (int j = 0; j < omyddb->lot; j++)
 			if (!strcmp(omyddb[j].oselect, t[i].column)) {
 				v[i] = true;
 				col++;
