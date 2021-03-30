@@ -134,7 +134,7 @@ extern "C" {
 typedef struct {
 	int w;          /* number of columns (->)          */
 	int h;          /* number of rows (->)             */
-	int olot;       /* output number (->)              */
+	int lot;        /* output number (->)              */
 	int row_size;   /* row string size                 */
 	int col_size;   /* column string size              */
 	int max_line;   /* line string, max size           */
